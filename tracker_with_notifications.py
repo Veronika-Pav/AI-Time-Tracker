@@ -27,6 +27,55 @@ from gigachat_client import get_gigachat_response
 import serial
 import serial.tools.list_ports
 
+import win32event
+import win32api
+import winerror
+
+def check_single_instance():
+    """Проверяет, что программа запущена только один раз."""
+    mutex_name = "AITimeTracker_SingleInstance_Mutex"
+    
+    try:
+        # Создаём мьютекс (если он уже существует, возвращается ERROR_ALREADY_EXISTS)
+        mutex = win32event.CreateMutex(None, False, mutex_name)
+        error = win32api.GetLastError()
+        
+        if error == winerror.ERROR_ALREADY_EXISTS:
+            # Мьютекс уже существует -> программа уже запущена
+            print("[INFO] Программа уже запущена. Активируем существующее окно.")
+            
+            # Пытаемся найти и показать существующее окно
+            try:
+                import win32gui
+                import win32con
+                
+                def enum_windows_callback(hwnd, hwnds):
+                    if win32gui.IsWindowVisible(hwnd):
+                        window_text = win32gui.GetWindowText(hwnd)
+                        if any(title in window_text for title in ["ИИ-трекер времени", "Настройки ИИ-трекера", "ИИ-трекер - Статистика"]):
+                            hwnds.append(hwnd)
+                
+                windows = []
+                win32gui.EnumWindows(enum_windows_callback, windows)
+                
+                for hwnd in windows:
+                    if win32gui.IsIconic(hwnd):
+                        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+                    win32gui.SetForegroundWindow(hwnd)
+                    win32gui.BringWindowToTop(hwnd)
+                    break
+            except:
+                pass
+            
+            return False  # Завершаем новый экземпляр
+        else:
+            # Мьютекс создан успешно — первый экземпляр
+            return True
+            
+    except Exception as e:
+        print(f"[WARNING] Ошибка при проверке единственного экземпляра: {e}")
+        return True  # Если ошибка — разрешаем запуск
+
 def find_esp_port():
     """Находит порт, к которому подключена ESP8266"""
     ports = serial.tools.list_ports.comports()
@@ -1457,7 +1506,7 @@ class TrayApp:
         self.tracker_thread.start()
         
         self.tray_icon = QSystemTrayIcon()
-        icon = QIcon("assets/icon.ico")
+        icon = create_icon()
         self.tray_icon.setIcon(icon)
         self.tray_icon.setToolTip("ИИ-трекер времени\nТрекер активен")
         
@@ -1519,5 +1568,9 @@ class TrayApp:
         sys.exit(self.app.exec_())
 
 if __name__ == "__main__":
+    # Проверяем, что программа запущена только один раз
+    if not check_single_instance():
+        sys.exit(0)  # Выходим, если уже запущена
+    
     app = TrayApp()
     app.run()
