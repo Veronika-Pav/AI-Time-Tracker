@@ -12,7 +12,8 @@
 ## Установка
 1. Установите Python 3.12+
 2. Установите зависимости, введя в консоль команду: `pip install -r requirements.txt`
-3. Запустите: `python tracker_with_notifications.py`
+3. Запустите программу, введя в консоль команду: `python tracker_with_notifications.py`
 
 ## Сборка EXE
 Введите в консоль: `pyinstaller --onefile --noconsole --name="AITimeTracker" --add-data "assets/icon.ico;assets" tracker_with_notifications.py`
+Сборка программы может занять несколько минут.

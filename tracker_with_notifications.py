@@ -1483,7 +1483,8 @@ class TrayApp:
         exit_action = menu.addAction("Выйти")
         exit_action.triggered.connect(self.exit_app)
         self.tray_icon.setContextMenu(menu)
-    
+        self.show_main_window()
+
     def show_notification(self, message):
         self.tray_icon.showMessage("ИИ-трекер времени", message, QSystemTrayIcon.Information, 5000)
         # Отправляем команду на микроконтроллер, чтобы светодиод мигал
